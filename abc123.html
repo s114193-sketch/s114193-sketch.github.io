@@ -1,10 +1,577 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title> calculator</title>
-    <link rel="icon" href="icon.png">
-  </head>
-  <body>
-     hello world
-  </body>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>線上計算機</title>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+body {
+display: flex;
+justify-content: center;
+align-items: center;
+min-height: 100vh;
+background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+padding: 20px;
+}
+
+.calculator {
+width: 100%;
+max-width: 400px;
+background-color: #fff;
+border-radius: 20px;
+box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+overflow: hidden;
+}
+
+.display {
+background-color: #1a1a2e;
+color: white;
+padding: 25px 20px;
+text-align: right;
+min-height: 120px;
+display: flex;
+flex-direction: column;
+justify-content: flex-end;
+}
+
+.previous-operand {
+font-size: 1.2rem;
+color: rgba(255, 255, 255, 0.7);
+min-height: 27px;
+word-wrap: break-word;
+}
+
+.current-operand {
+font-size: 2.5rem;
+font-weight: 300;
+margin-top: 10px;
+word-wrap: break-word;
+}
+
+.buttons {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 1px;
+background-color: #ddd;
+}
+
+button {
+border: none;
+padding: 20px 10px;
+font-size: 1.2rem;
+background-color: white;
+cursor: pointer;
+transition: all 0.2s;
+outline: none;
+}
+
+button:hover {
+background-color: #f0f0f0;
+}
+
+button:active {
+background-color: #e0e0e0;
+transform: scale(0.98);
+}
+
+.operator {
+background-color: #f9f9f9;
+color: #2575fc;
+font-weight: 500;
+}
+
+.equals {
+background-color: #2575fc;
+color: white;
+grid-column: span 2;
+}
+
+.equals:hover {
+background-color: #1a67e8;
+}
+
+.clear, .delete {
+background-color: #ff6b6b;
+color: white;
+}
+
+.clear:hover, .delete:hover {
+background-color: #ff5252;
+}
+
+.memory {
+background-color: #f0f0f0;
+}
+
+.advanced {
+background-color: #e8f4fd;
+color: #2575fc;
+}
+
+.header {
+padding: 15px 20px;
+background-color: #2575fc;
+color: white;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.header h1 {
+font-size: 1.5rem;
+font-weight: 500;
+}
+
+.mode-toggle {
+background: rgba(255, 255, 255, 0.2);
+border: none;
+color: white;
+padding: 8px 15px;
+border-radius: 20px;
+cursor: pointer;
+font-size: 0.9rem;
+transition: all 0.3s;
+}
+
+.mode-toggle:hover {
+background: rgba(255, 255, 255, 0.3);
+}
+
+.advanced-buttons {
+display: grid;
+grid-template-columns: repeat(5, 1fr);
+gap: 1px;
+background-color: #ddd;
+max-height: 0;
+overflow: hidden;
+transition: max-height 0.5s ease;
+}
+
+.advanced-buttons.show {
+max-height: 200px;
+}
+
+.history {
+background-color: #f8f9fa;
+padding: 15px;
+max-height: 150px;
+overflow-y: auto;
+border-top: 1px solid #eee;
+display: none;
+}
+
+.history.show {
+display: block;
+}
+
+.history-item {
+padding: 8px 0;
+border-bottom: 1px solid #eee;
+font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+.calculator {
+max-width: 100%;
+}
+
+button {
+padding: 18px 5px;
+font-size: 1.1rem;
+}
+
+.current-operand {
+font-size: 2rem;
+}
+}
+</style>
+</head>
+<body>
+<div class="calculator">
+<div class="header">
+<h1>科學計算機</h1>
+<button class="mode-toggle" id="modeToggle">基本模式</button>
+</div>
+
+<div class="display">
+<div class="previous-operand" id="previousOperand"></div>
+<div class="current-operand" id="currentOperand">0</div>
+</div>
+
+<div class="advanced-buttons" id="advancedButtons">
+<button class="advanced">sin</button>
+<button class="advanced">cos</button>
+<button class="advanced">tan</button>
+<button class="advanced">log</button>
+<button class="advanced">ln</button>
+<button class="advanced">x²</button>
+<button class="advanced">√</button>
+<button class="advanced">x^y</button>
+<button class="advanced">π</button>
+<button class="advanced">e</button>
+</div>
+
+<div class="buttons">
+<button class="memory" id="mc">MC</button>
+<button class="memory" id="mr">MR</button>
+<button class="memory" id="m-plus">M+</button>
+<button class="memory" id="m-minus">M-</button>
+<button class="clear" id="clear">C</button>
+<button class="delete" id="delete">⌫</button>
+<button class="operator" id="percent">%</button>
+<button class="operator" id="divide">÷</button>
+
+<button class="number" id="seven">7</button>
+<button class="number" id="eight">8</button>
+<button class="number" id="nine">9</button>
+<button class="operator" id="multiply">×</button>
+
+<button class="number" id="four">4</button>
+<button class="number" id="five">5</button>
+<button class="number" id="six">6</button>
+<button class="operator" id="subtract">-</button>
+
+<button class="number" id="one">1</button>
+<button class="number" id="two">2</button>
+<button class="number" id="three">3</button>
+<button class="operator" id="add">+</button>
+
+<button class="number" id="plus-minus">±</button>
+<button class="number" id="zero">0</button>
+<button class="number" id="decimal">.</button>
+<button class="equals" id="equals">=</button>
+</div>
+
+<div class="history" id="historyPanel">
+<div class="history-item">計算歷史記錄</div>
+</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+// 計算機狀態變數
+let currentOperand = '0';
+let previousOperand = '';
+let operation = null;
+let memory = 0;
+let isAdvancedMode = false;
+let calculationHistory = [];
+
+// DOM 元素
+const currentOperandElement = document.getElementById('currentOperand');
+const previousOperandElement = document.getElementById('previousOperand');
+const advancedButtons = document.getElementById('advancedButtons');
+const modeToggle = document.getElementById('modeToggle');
+const historyPanel = document.getElementById('historyPanel');
+
+// 數字按鈕
+document.querySelectorAll('.number').forEach(button => {
+button.addEventListener('click', () => {
+appendNumber(button.innerText);
+updateDisplay();
+});
+});
+
+// 運算符按鈕
+document.querySelectorAll('.operator').forEach(button => {
+button.addEventListener('click', () => {
+chooseOperation(button.innerText);
+updateDisplay();
+});
+});
+
+// 等於按鈕
+document.getElementById('equals').addEventListener('click', () => {
+compute();
+updateDisplay();
+});
+
+// 清除按鈕
+document.getElementById('clear').addEventListener('click', () => {
+clear();
+updateDisplay();
+});
+
+// 刪除按鈕
+document.getElementById('delete').addEventListener('click', () => {
+deleteLast();
+updateDisplay();
+});
+
+// 正負號按鈕
+document.getElementById('plus-minus').addEventListener('click', () => {
+toggleSign();
+updateDisplay();
+});
+
+// 百分比按鈕
+document.getElementById('percent').addEventListener('click', () => {
+percentage();
+updateDisplay();
+});
+
+// 記憶功能按鈕
+document.getElementById('mc').addEventListener('click', () => {
+memoryClear();
+});
+
+document.getElementById('mr').addEventListener('click', () => {
+memoryRecall();
+updateDisplay();
+});
+
+document.getElementById('m-plus').addEventListener('click', () => {
+memoryAdd();
+});
+
+document.getElementById('m-minus').addEventListener('click', () => {
+memorySubtract();
+});
+
+// 高級功能按鈕
+document.querySelectorAll('.advanced').forEach(button => {
+button.addEventListener('click', () => {
+handleAdvancedFunction(button.innerText);
+updateDisplay();
+});
+});
+
+// 模式切換
+modeToggle.addEventListener('click', () => {
+toggleMode();
+});
+
+// 鍵盤支持
+document.addEventListener('keydown', event => {
+handleKeyboardInput(event);
+});
+
+// 函數定義
+function appendNumber(number) {
+if (number === '.' && currentOperand.includes('.')) return;
+
+if (currentOperand === '0' && number !== '.') {
+currentOperand = number;
+} else {
+currentOperand += number;
+}
+}
+
+function chooseOperation(op) {
+if (currentOperand === '') return;
+
+if (previousOperand !== '') {
+compute();
+}
+
+operation = op;
+previousOperand = currentOperand;
+currentOperand = '';
+}
+
+function compute() {
+let computation;
+const prev = parseFloat(previousOperand);
+const current = parseFloat(currentOperand);
+
+if (isNaN(prev) || isNaN(current)) return;
+
+switch (operation) {
+case '+':
+computation = prev + current;
+break;
+case '-':
+computation = prev - current;
+break;
+case '×':
+computation = prev * current;
+break;
+case '÷':
+if (current === 0) {
+alert('錯誤：不能除以零');
+clear();
+return;
+}
+computation = prev / current;
+break;
+default:
+return;
+}
+
+// 記錄計算歷史
+const historyEntry = `${previousOperand} ${operation} ${currentOperand} = ${computation}`;
+calculationHistory.unshift(historyEntry);
+updateHistory();
+
+currentOperand = computation.toString();
+operation = null;
+previousOperand = '';
+}
+
+function clear() {
+currentOperand = '0';
+previousOperand = '';
+operation = null;
+}
+
+function deleteLast() {
+if (currentOperand.length === 1) {
+currentOperand = '0';
+} else {
+currentOperand = currentOperand.slice(0, -1);
+}
+}
+
+function toggleSign() {
+currentOperand = (parseFloat(currentOperand) * -1).toString();
+}
+
+function percentage() {
+currentOperand = (parseFloat(currentOperand) / 100).toString();
+}
+
+function memoryClear() {
+memory = 0;
+}
+
+function memoryRecall() {
+currentOperand = memory.toString();
+}
+
+function memoryAdd() {
+memory += parseFloat(currentOperand);
+}
+
+function memorySubtract() {
+memory -= parseFloat(currentOperand);
+}
+
+function handleAdvancedFunction(func) {
+const current = parseFloat(currentOperand);
+
+switch (func) {
+case 'sin':
+currentOperand = Math.sin(current * Math.PI / 180).toString();
+break;
+case 'cos':
+currentOperand = Math.cos(current * Math.PI / 180).toString();
+break;
+case 'tan':
+currentOperand = Math.tan(current * Math.PI / 180).toString();
+break;
+case 'log':
+if (current <= 0) {
+alert('錯誤：對數輸入必須大於零');
+return;
+}
+currentOperand = Math.log10(current).toString();
+break;
+case 'ln':
+if (current <= 0) {
+alert('錯誤：自然對數輸入必須大於零');
+return;
+}
+currentOperand = Math.log(current).toString();
+break;
+case 'x²':
+currentOperand = Math.pow(current, 2).toString();
+break;
+case '√':
+if (current < 0) {
+alert('錯誤：不能對負數開平方根');
+return;
+}
+currentOperand = Math.sqrt(current).toString();
+break;
+case 'x^y':
+previousOperand = currentOperand;
+currentOperand = '';
+operation = '^';
+break;
+case 'π':
+currentOperand = Math.PI.toString();
+break;
+case 'e':
+currentOperand = Math.E.toString();
+break;
+}
+
+// 記錄高級函數計算歷史
+if (func !== 'x^y') {
+const historyEntry = `${func}(${current}) = ${currentOperand}`;
+calculationHistory.unshift(historyEntry);
+updateHistory();
+}
+}
+
+function toggleMode() {
+isAdvancedMode = !isAdvancedMode;
+
+if (isAdvancedMode) {
+advancedButtons.classList.add('show');
+modeToggle.innerText = '科學模式';
+historyPanel.classList.add('show');
+} else {
+advancedButtons.classList.remove('show');
+modeToggle.innerText = '基本模式';
+historyPanel.classList.remove('show');
+}
+}
+
+function updateHistory() {
+const historyElement = document.getElementById('historyPanel');
+historyElement.innerHTML = '<div class="history-item">計算歷史記錄</div>';
+
+calculationHistory.slice(0, 5).forEach(entry => {
+const historyItem = document.createElement('div');
+historyItem.className = 'history-item';
+historyItem.textContent = entry;
+historyElement.appendChild(historyItem);
+});
+}
+
+function handleKeyboardInput(event) {
+if (event.key >= '0' && event.key <= '9') {
+appendNumber(event.key);
+} else if (event.key === '.') {
+appendNumber('.');
+} else if (event.key === '+' || event.key === '-' || event.key === '*' || event.key === '/') {
+let op = event.key;
+if (op === '*') op = '×';
+if (op === '/') op = '÷';
+chooseOperation(op);
+} else if (event.key === 'Enter' || event.key === '=') {
+compute();
+} else if (event.key === 'Escape' || event.key === 'Delete') {
+clear();
+} else if (event.key === 'Backspace') {
+deleteLast();
+}
+
+updateDisplay();
+event.preventDefault();
+}
+
+function updateDisplay() {
+currentOperandElement.innerText = currentOperand;
+
+if (operation != null) {
+previousOperandElement.innerText = `${previousOperand} ${operation}`;
+} else {
+previousOperandElement.innerText = previousOperand;
+}
+}
+
+// 初始化顯示
+updateDisplay();
+});
+</script>
+</body>
 </html>
