@@ -1,37 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>美麗心情製造機</title>
 
-<!doctype html>
-<html lang="zh-TW">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/jpeg" href="https://static.readdy.ai/image/4b58be96775aad790a5f1c7a598bd9bb/4d665b9adfa6ae05d6e004ce30dda1ae.jpeg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>每日勵志 - 獲取正能量語錄與激勵話語</title>
-    <meta name="description" content="每日勵志提供精選的勵志語錄與激勵話語，點擊按鈕即可隨機獲取正能量內容。支援暗色模式、自訂主題色彩，為您的每一天注入動力與希望。立即體驗流暢的互動設計與美麗的視覺效果。" />
-    <meta name="keywords" content="勵志語錄, 激勵話語, 正能量, 每日勵志, 心靈雞湯, 勵志名言" />
-    <link rel="canonical" href="https://readdy.ai/" />
-    <meta name="last-modified" content="2025-01-01" />
-    
-    <!-- Open Graph -->
-    <meta property="og:title" content="每日勵志 - 獲取正能量語錄與激勵話語" />
-    <meta property="og:description" content="每日勵志提供精選的勵志語錄與激勵話語，點擊按鈕即可隨機獲取正能量內容。" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://static.readdy.ai/image/4b58be96775aad790a5f1c7a598bd9bb/4d665b9adfa6ae05d6e004ce30dda1ae.jpeg" />
-    
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="每日勵志 - 獲取正能量語錄與激勵話語" />
-    <meta name="twitter:description" content="每日勵志提供精選的勵志語錄與激勵話語，點擊按鈕即可隨機獲取正能量內容。" />
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.5.0/remixicon.min.css">
-  <meta name="readdy-project-version" content="6f9d5c615a5d57d76b79da0fd665d496:f35a5dad7fde2d2d10829536fde2f3ce:1d1c3fe54ba17754f9e281e7866daea463acb2b32f9ac64857308565b4f37e8707434ecccec7b6bdf2590c277eda4ec40b46d4a7fc9cad0d6a146099c8532c3a">
-          <script type="module" crossorigin src="/preview/19ef9442-b488-439a-97ca-418d5e8a9f65/4742761/assets/index-CcgnYClb.js"></script>
-          <link rel="stylesheet" crossorigin href="/preview/19ef9442-b488-439a-97ca-418d5e8a9f65/4742761/assets/index-LDEu8MiJ.css">
-        </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<style>
+    :root {
+        --theme-color: #e8a8b8;
+        --bg-soft: #faf9f9;
+    }
+
+    body {
+        margin: 0;
+        font-family: "Microsoft JhengHei", sans-serif;
+        background-color: var(--bg-soft);
+        color: #444;
+        overflow-x: hidden;
+        position: relative;
+    }
+
+    /* 黑白插畫背景容器 */
+    .illustration {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: -1;
+        opacity: 0.18; /* 不會搶過文字 */
+    }
+
+    .illustration svg {
+        position: absolute;
+        width: 140px;
+        height: 140px;
+        opacity: 0.25;
+    }
+
+    header {
+        padding: 15px 30px;
+        font-size: 20px;
+        font-weight: bold;
+        color: var(--theme-color);
+    }
+
+    .container {
+        max-width: 900px;
+        margin: 50px auto;
+        text-align: center;
+    }
+
+    h1 {
+        font-size: 36px;
+        color: var(--theme-color);
+        margin-bottom: 10px;
+    }
+
+    .sub {
+        margin-bottom: 25px;
+        color: #777;
+    }
+
+    .quote-box {
+        width: 100%;
+        max-width: 780px;
+        margin: 0 auto;
+        background: linear-gradient(to bottom, #ffffffdd, #00000055);
+        padding: 60px 30px;
+        border-radius: 20px;
+        color: white;
+        font-size: 24px;
+    }
+
+    button {
+        padding: 15px 40px;
+        margin-top: 35px;
+        border: none;
+        border-radius: 30px;
+        background: var(--theme-color);
+        color: white;
+        font-size: 18px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        filter: brightness(0.9);
+    }
+
+    /* 主題色選單 */
+    .theme-panel {
+        padding: 15px 30px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .color-option {
+        width: 50px;
+        height: 30px;
+        border-radius: 10px;
+        cursor: pointer;
+        border: 3px solid transparent;
+    }
+
+    .color-option.selected {
+        border: 3px solid #555;
+    }
+</style>
+</head>
+<body>
+
+<!-- 黑白插畫背景 -->
+<div class="illustration" id="illustrationArea"></div>
+
+<header>
+    🌸 美麗心情製造機
+</header>
+
+<!-- 主題色選擇 -->
+<div class="theme-panel">
+    <div class="color-option selected" data-color="#e8a8b8" style="background:#e8a8b8"></div>
+    <div class="color-option" data-color="#f4c39f" style="background:#f4c39f"></div>
+    <div class="color-option" data-color="#a7d7e8" style="background:#a7d7e8"></div>
+    <div class="color-option" data-color="#bce6c9" style="background:#bce6c9"></div>
+    <div class="color-option" data-color="#e4b7d1" style="background:#e4b7d1"></div>
+</div>
+
+<div class="container">
+    <h1>今天想聽什麼話呢？</h1>
+    <div class="sub">輕輕一按，溫暖的話語就會出現</div>
+
+    <div class="quote-box">
+        <p id="quoteText">微笑面對生活，生活也會對你微笑。</p>
+    </div>
+
+    <button onclick="changeQuote()">按一下試試看吧</button>
+</div>
+
+<script>
+/* 心情語錄 */
+const quotes = [
+    "微笑面對生活，生活也會對你微笑。",
+    "今天的你，比昨天更勇敢。",
+    "你已經比自己想像的更強大了。",
+    "先相信自己，才能讓別人相信你。",
+    "不需要很厲害才能開始，但需要開始才能很厲害。",
+    "每一步都算數，即使很小也沒關係。",
+    "累了也別放棄，休息一下再出發就好。",
+    "願你成為自己的光，不必再依賴誰來照亮。",
+    "你值得更好的，所以不要停止往前走。",
+    "勇氣不是不害怕，而是帶著害怕仍然前進。"
+];
+
+let index = 0;
+function changeQuote() {
+    index = (index + 1) % quotes.length;
+    document.getElementById("quoteText").innerText = quotes[index];
+}
+
+/* 主題色系選擇 */
+document.querySelectorAll(".color-option").forEach(option => {
+    option.addEventListener("click", () => {
+        document.querySelectorAll(".color-option").forEach(o => o.classList.remove("selected"));
+
+        option.classList.add("selected");
+        const color = option.dataset.color;
+        document.documentElement.style.setProperty("--theme-color", color);
+    });
+});
+
+/* 黑白插畫 SVG 模組（小花、星星、雲、小愛心） */
+const svgs = [
+`<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="12" stroke="black" stroke-width="3" fill="none"/><circle cx="32" cy="10" r="6" stroke="black" stroke-width="3" fill="none"/><circle cx="32" cy="54" r="6" stroke="black" stroke-width="3" fill="none"/><circle cx="10" cy="32" r="6" stroke="black" stroke-width="3" fill="none"/><circle cx="54" cy="32" r="6" stroke="black" stroke-width="3" fill="none"/></svg>`,
+
+`<svg viewBox="0 0 64 64"><polygon points="32,6 25,26 4,26 21,38 14,58 32,46 50,58 43,38 60,26 39,26" stroke="black" stroke-width="3" fill="none"/></svg>`,
+
+`<svg viewBox="0 0 64 64"><ellipse cx="20" cy="40" rx="12" ry="8" stroke="black" stroke-width="3" fill="none"/><ellipse cx="40" cy="40" rx="14" ry="10" stroke="black" stroke-width="3" fill="none"/></svg>`,
+
+`<svg viewBox="0 0 64 64"><path d="M32 50 C10 32 10 18 22 14 C28 12 32 18 32 18 C32 18 36 12 42 14 C54 18 54 32 32 50 Z" stroke="black" stroke-width="3" fill="none"/></svg>`
+];
+
+/* 隨機放置插畫到背景 */
+function placeIllustrations() {
+    const container = document.getElementById("illustrationArea");
+
+    for (let i = 0; i < 10; i++) {
+        const div = document.createElement("div");
+        div.innerHTML = svgs[Math.floor(Math.random() * svgs.length)];
+        const svg = div.firstChild;
+        
+        svg.style.left = Math.random() * 90 + "vw";
+        svg.style.top = Math.random() * 90 + "vh";
+        svg.style.position = "absolute";
+        svg.style.opacity = 0.18;
+        svg.style.transform = `rotate(${Math.random() * 360}deg)`;
+
+        container.appendChild(svg);
+    }
+}
+
+placeIllustrations();
+</script>
+
+</body>
 </html>
+
