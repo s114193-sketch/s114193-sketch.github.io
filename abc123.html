@@ -1,577 +1,305 @@
+from flask import Flask, render_template_string, request, jsonify
+import random
+import os
+
+app = Flask(__name__)
+
+# 勵志語錄資料庫
+quotes = [
+"相信自己，你比想像中更強大！",
+"每一天都是新的開始，放下過去，擁抱現在。",
+"你的價值不需要由他人來定義。",
+"小小的進步也是進步，為自己鼓掌。",
+"世界會給那些有目標和遠見的人讓路。",
+"不是看到希望才堅持，而是堅持了才看到希望。",
+"你遠比自己想像的更加勇敢和堅強。",
+"照顧好自己的心靈，和照顧身體一樣重要。"
+]
+
+# HTML模板
+HTML_TEMPLATE = '''
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>線上計算機</title>
+<title>美麗心情製造機</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
-* {
-margin: 0;
-padding: 0;
-box-sizing: border-box;
-font-family: 'Segoe UI', Arial, sans-serif;
+.theme-dark {
+background-color: #1a202c;
+color: #e2e8f0;
 }
-
-body {
-display: flex;
-justify-content: center;
-align-items: center;
-min-height: 100vh;
-background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-padding: 20px;
+.theme-light {
+background-color: #f7fafc;
+color: #2d3748;
 }
-
-.calculator {
-width: 100%;
-max-width: 400px;
-background-color: #fff;
-border-radius: 20px;
-box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-overflow: hidden;
-}
-
-.display {
-background-color: #1a1a2e;
+.btn-primary {
+background-color: #4299e1;
 color: white;
-padding: 25px 20px;
-text-align: right;
-min-height: 120px;
-display: flex;
-flex-direction: column;
-justify-content: flex-end;
-}
-
-.previous-operand {
-font-size: 1.2rem;
-color: rgba(255, 255, 255, 0.7);
-min-height: 27px;
-word-wrap: break-word;
-}
-
-.current-operand {
-font-size: 2.5rem;
-font-weight: 300;
-margin-top: 10px;
-word-wrap: break-word;
-}
-
-.buttons {
-display: grid;
-grid-template-columns: repeat(4, 1fr);
-gap: 1px;
-background-color: #ddd;
-}
-
-button {
+padding: 12px 24px;
+border-radius: 8px;
+font-weight: bold;
 border: none;
-padding: 20px 10px;
-font-size: 1.2rem;
+cursor: pointer;
+transition: background-color 0.3s;
+}
+.btn-primary:hover {
+background-color: #3182ce;
+}
+/* 開關樣式 */
+.switch {
+position: relative;
+display: inline-block;
+width: 60px;
+height: 34px;
+}
+.switch input {
+opacity: 0;
+width: 0;
+height: 0;
+}
+.slider {
+position: absolute;
+cursor: pointer;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background-color: #ccc;
+transition: .4s;
+}
+.slider:before {
+position: absolute;
+content: "";
+height: 26px;
+width: 26px;
+left: 4px;
+bottom: 4px;
 background-color: white;
-cursor: pointer;
-transition: all 0.2s;
-outline: none;
+transition: .4s;
 }
-
-button:hover {
-background-color: #f0f0f0;
+input:checked + .slider {
+background-color: #4299e1;
 }
-
-button:active {
-background-color: #e0e0e0;
-transform: scale(0.98);
+input:checked + .slider:before {
+transform: translateX(26px);
 }
-
-.operator {
-background-color: #f9f9f9;
-color: #2575fc;
-font-weight: 500;
+.slider.round {
+border-radius: 34px;
 }
-
-.equals {
-background-color: #2575fc;
-color: white;
-grid-column: span 2;
-}
-
-.equals:hover {
-background-color: #1a67e8;
-}
-
-.clear, .delete {
-background-color: #ff6b6b;
-color: white;
-}
-
-.clear:hover, .delete:hover {
-background-color: #ff5252;
-}
-
-.memory {
-background-color: #f0f0f0;
-}
-
-.advanced {
-background-color: #e8f4fd;
-color: #2575fc;
-}
-
-.header {
-padding: 15px 20px;
-background-color: #2575fc;
-color: white;
-display: flex;
-justify-content: space-between;
-align-items: center;
-}
-
-.header h1 {
-font-size: 1.5rem;
-font-weight: 500;
-}
-
-.mode-toggle {
-background: rgba(255, 255, 255, 0.2);
-border: none;
-color: white;
-padding: 8px 15px;
-border-radius: 20px;
-cursor: pointer;
-font-size: 0.9rem;
-transition: all 0.3s;
-}
-
-.mode-toggle:hover {
-background: rgba(255, 255, 255, 0.3);
-}
-
-.advanced-buttons {
-display: grid;
-grid-template-columns: repeat(5, 1fr);
-gap: 1px;
-background-color: #ddd;
-max-height: 0;
-overflow: hidden;
-transition: max-height 0.5s ease;
-}
-
-.advanced-buttons.show {
-max-height: 200px;
-}
-
-.history {
-background-color: #f8f9fa;
-padding: 15px;
-max-height: 150px;
-overflow-y: auto;
-border-top: 1px solid #eee;
-display: none;
-}
-
-.history.show {
-display: block;
-}
-
-.history-item {
-padding: 8px 0;
-border-bottom: 1px solid #eee;
-font-size: 0.9rem;
-}
-
-@media (max-width: 480px) {
-.calculator {
-max-width: 100%;
-}
-
-button {
-padding: 18px 5px;
-font-size: 1.1rem;
-}
-
-.current-operand {
-font-size: 2rem;
-}
+.slider.round:before {
+border-radius: 50%;
 }
 </style>
 </head>
-<body>
-<div class="calculator">
-<div class="header">
-<h1>科學計算機</h1>
-<button class="mode-toggle" id="modeToggle">基本模式</button>
+<body class="theme-light min-h-screen transition-colors duration-300">
+<div class="container mx-auto px-4 py-12 max-w-3xl">
+<!-- 標題 -->
+<header class="text-center mb-12">
+<h1 class="text-4xl font-bold mb-4">美麗心情製造機</h1>
+<p class="text-xl text-gray-600 dark:text-gray-300">今天想聽什麼話呢？</p>
+<p class="text-gray-500 dark:text-gray-400">輕輕一按，溫暖的話語就會出現</p>
+</header>
+
+<!-- 主要語錄區域 -->
+<main class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-12 text-center">
+<div class="mb-8">
+<p id="quoteDisplay" class="text-2xl leading-relaxed">{{ quote }}</p>
+<p class="mt-4 text-gray-500 dark:text-gray-400">— 別不開心啦</p>
 </div>
 
-<div class="display">
-<div class="previous-operand" id="previousOperand"></div>
-<div class="current-operand" id="currentOperand">0</div>
+<button onclick="getNewQuote()" class="btn-primary text-lg">
+換一句話 💫
+</button>
+</main>
+
+<!-- 功能特色 -->
+<section class="mb-12">
+<h2 class="text-3xl font-bold text-center mb-8">三個小特色</h2>
+<p class="text-center text-gray-600 dark:text-gray-300 mb-8">簡單、溫暖、隨時陪伴</p>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow text-center">
+<h3 class="text-xl font-bold mb-4">一秒就好</h3>
+<p class="text-gray-600 dark:text-gray-300">不用等待，點一下就能看到新的話語</p>
+</div>
+<div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow text-center">
+<h3 class="text-xl font-bold mb-4">換個心情</h3>
+<p class="text-gray-600 dark:text-gray-300">可以切換深色模式，選擇喜歡的顏色</p>
+</div>
+<div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow text-center">
+<h3 class="text-xl font-bold mb-4">隨身攜帶</h3>
+<p class="text-gray-600 dark:text-gray-300">手機、平板、電腦都能用</p>
+</div>
+</div>
+</section>
+
+<!-- 主題設定 -->
+<section class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+<h2 class="text-3xl font-bold mb-6">主題設定</h2>
+
+<div class="flex items-center justify-between mb-8">
+<span class="text-lg">暗色模式</span>
+<label class="switch">
+<input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()" {{ 'checked' if dark_mode else '' }}>
+<span class="slider round"></span>
+</label>
 </div>
 
-<div class="advanced-buttons" id="advancedButtons">
-<button class="advanced">sin</button>
-<button class="advanced">cos</button>
-<button class="advanced">tan</button>
-<button class="advanced">log</button>
-<button class="advanced">ln</button>
-<button class="advanced">x²</button>
-<button class="advanced">√</button>
-<button class="advanced">x^y</button>
-<button class="advanced">π</button>
-<button class="advanced">e</button>
-</div>
+<p class="text-gray-600 dark:text-gray-300">
+您的主題設定會自動儲存，下次訪問時會保持相同的設定。
+</p>
+</section>
 
-<div class="buttons">
-<button class="memory" id="mc">MC</button>
-<button class="memory" id="mr">MR</button>
-<button class="memory" id="m-plus">M+</button>
-<button class="memory" id="m-minus">M-</button>
-<button class="clear" id="clear">C</button>
-<button class="delete" id="delete">⌫</button>
-<button class="operator" id="percent">%</button>
-<button class="operator" id="divide">÷</button>
-
-<button class="number" id="seven">7</button>
-<button class="number" id="eight">8</button>
-<button class="number" id="nine">9</button>
-<button class="operator" id="multiply">×</button>
-
-<button class="number" id="four">4</button>
-<button class="number" id="five">5</button>
-<button class="number" id="six">6</button>
-<button class="operator" id="subtract">-</button>
-
-<button class="number" id="one">1</button>
-<button class="number" id="two">2</button>
-<button class="number" id="three">3</button>
-<button class="operator" id="add">+</button>
-
-<button class="number" id="plus-minus">±</button>
-<button class="number" id="zero">0</button>
-<button class="number" id="decimal">.</button>
-<button class="equals" id="equals">=</button>
-</div>
-
-<div class="history" id="historyPanel">
-<div class="history-item">計算歷史記錄</div>
-</div>
+<!-- 頁腳 -->
+<footer class="mt-12 text-center text-gray-500 dark:text-gray-400">
+<p>Designed by 美麗心情製造機</p>
+</footer>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-// 計算機狀態變數
-let currentOperand = '0';
-let previousOperand = '';
-let operation = null;
-let memory = 0;
-let isAdvancedMode = false;
-let calculationHistory = [];
+// 從本地儲存中獲取主題設定
+let darkMode = localStorage.getItem('darkMode') === 'true' || {{ 'true' if dark_mode else 'false' }};
 
-// DOM 元素
-const currentOperandElement = document.getElementById('currentOperand');
-const previousOperandElement = document.getElementById('previousOperand');
-const advancedButtons = document.getElementById('advancedButtons');
-const modeToggle = document.getElementById('modeToggle');
-const historyPanel = document.getElementById('historyPanel');
-
-// 數字按鈕
-document.querySelectorAll('.number').forEach(button => {
-button.addEventListener('click', () => {
-appendNumber(button.innerText);
-updateDisplay();
-});
-});
-
-// 運算符按鈕
-document.querySelectorAll('.operator').forEach(button => {
-button.addEventListener('click', () => {
-chooseOperation(button.innerText);
-updateDisplay();
-});
-});
-
-// 等於按鈕
-document.getElementById('equals').addEventListener('click', () => {
-compute();
-updateDisplay();
-});
-
-// 清除按鈕
-document.getElementById('clear').addEventListener('click', () => {
-clear();
-updateDisplay();
-});
-
-// 刪除按鈕
-document.getElementById('delete').addEventListener('click', () => {
-deleteLast();
-updateDisplay();
-});
-
-// 正負號按鈕
-document.getElementById('plus-minus').addEventListener('click', () => {
-toggleSign();
-updateDisplay();
-});
-
-// 百分比按鈕
-document.getElementById('percent').addEventListener('click', () => {
-percentage();
-updateDisplay();
-});
-
-// 記憶功能按鈕
-document.getElementById('mc').addEventListener('click', () => {
-memoryClear();
-});
-
-document.getElementById('mr').addEventListener('click', () => {
-memoryRecall();
-updateDisplay();
-});
-
-document.getElementById('m-plus').addEventListener('click', () => {
-memoryAdd();
-});
-
-document.getElementById('m-minus').addEventListener('click', () => {
-memorySubtract();
-});
-
-// 高級功能按鈕
-document.querySelectorAll('.advanced').forEach(button => {
-button.addEventListener('click', () => {
-handleAdvancedFunction(button.innerText);
-updateDisplay();
-});
-});
-
-// 模式切換
-modeToggle.addEventListener('click', () => {
-toggleMode();
-});
-
-// 鍵盤支持
-document.addEventListener('keydown', event => {
-handleKeyboardInput(event);
-});
-
-// 函數定義
-function appendNumber(number) {
-if (number === '.' && currentOperand.includes('.')) return;
-
-if (currentOperand === '0' && number !== '.') {
-currentOperand = number;
+// 初始化主題
+function initializeTheme() {
+if (darkMode) {
+document.body.classList.remove('theme-light');
+document.body.classList.add('theme-dark');
+document.getElementById('darkModeToggle').checked = true;
 } else {
-currentOperand += number;
+document.body.classList.remove('theme-dark');
+document.body.classList.add('theme-light');
+document.getElementById('darkModeToggle').checked = false;
 }
 }
 
-function chooseOperation(op) {
-if (currentOperand === '') return;
+// 頁面載入時初始化主題
+document.addEventListener('DOMContentLoaded', initializeTheme);
 
-if (previousOperand !== '') {
-compute();
+// 獲取新語錄
+function getNewQuote() {
+fetch('/get_quote')
+.then(response => {
+if (!response.ok) {
+throw new Error('Network response was not ok');
 }
-
-operation = op;
-previousOperand = currentOperand;
-currentOperand = '';
-}
-
-function compute() {
-let computation;
-const prev = parseFloat(previousOperand);
-const current = parseFloat(currentOperand);
-
-if (isNaN(prev) || isNaN(current)) return;
-
-switch (operation) {
-case '+':
-computation = prev + current;
-break;
-case '-':
-computation = prev - current;
-break;
-case '×':
-computation = prev * current;
-break;
-case '÷':
-if (current === 0) {
-alert('錯誤：不能除以零');
-clear();
-return;
-}
-computation = prev / current;
-break;
-default:
-return;
-}
-
-// 記錄計算歷史
-const historyEntry = `${previousOperand} ${operation} ${currentOperand} = ${computation}`;
-calculationHistory.unshift(historyEntry);
-updateHistory();
-
-currentOperand = computation.toString();
-operation = null;
-previousOperand = '';
-}
-
-function clear() {
-currentOperand = '0';
-previousOperand = '';
-operation = null;
-}
-
-function deleteLast() {
-if (currentOperand.length === 1) {
-currentOperand = '0';
-} else {
-currentOperand = currentOperand.slice(0, -1);
-}
-}
-
-function toggleSign() {
-currentOperand = (parseFloat(currentOperand) * -1).toString();
-}
-
-function percentage() {
-currentOperand = (parseFloat(currentOperand) / 100).toString();
-}
-
-function memoryClear() {
-memory = 0;
-}
-
-function memoryRecall() {
-currentOperand = memory.toString();
-}
-
-function memoryAdd() {
-memory += parseFloat(currentOperand);
-}
-
-function memorySubtract() {
-memory -= parseFloat(currentOperand);
-}
-
-function handleAdvancedFunction(func) {
-const current = parseFloat(currentOperand);
-
-switch (func) {
-case 'sin':
-currentOperand = Math.sin(current * Math.PI / 180).toString();
-break;
-case 'cos':
-currentOperand = Math.cos(current * Math.PI / 180).toString();
-break;
-case 'tan':
-currentOperand = Math.tan(current * Math.PI / 180).toString();
-break;
-case 'log':
-if (current <= 0) {
-alert('錯誤：對數輸入必須大於零');
-return;
-}
-currentOperand = Math.log10(current).toString();
-break;
-case 'ln':
-if (current <= 0) {
-alert('錯誤：自然對數輸入必須大於零');
-return;
-}
-currentOperand = Math.log(current).toString();
-break;
-case 'x²':
-currentOperand = Math.pow(current, 2).toString();
-break;
-case '√':
-if (current < 0) {
-alert('錯誤：不能對負數開平方根');
-return;
-}
-currentOperand = Math.sqrt(current).toString();
-break;
-case 'x^y':
-previousOperand = currentOperand;
-currentOperand = '';
-operation = '^';
-break;
-case 'π':
-currentOperand = Math.PI.toString();
-break;
-case 'e':
-currentOperand = Math.E.toString();
-break;
-}
-
-// 記錄高級函數計算歷史
-if (func !== 'x^y') {
-const historyEntry = `${func}(${current}) = ${currentOperand}`;
-calculationHistory.unshift(historyEntry);
-updateHistory();
-}
-}
-
-function toggleMode() {
-isAdvancedMode = !isAdvancedMode;
-
-if (isAdvancedMode) {
-advancedButtons.classList.add('show');
-modeToggle.innerText = '科學模式';
-historyPanel.classList.add('show');
-} else {
-advancedButtons.classList.remove('show');
-modeToggle.innerText = '基本模式';
-historyPanel.classList.remove('show');
-}
-}
-
-function updateHistory() {
-const historyElement = document.getElementById('historyPanel');
-historyElement.innerHTML = '<div class="history-item">計算歷史記錄</div>';
-
-calculationHistory.slice(0, 5).forEach(entry => {
-const historyItem = document.createElement('div');
-historyItem.className = 'history-item';
-historyItem.textContent = entry;
-historyElement.appendChild(historyItem);
+return response.json();
+})
+.then(data => {
+document.getElementById('quoteDisplay').textContent = data.quote;
+})
+.catch(error => {
+console.error('Error fetching quote:', error);
+// 如果API失敗，從本地語錄中隨機選擇一個
+const fallbackQuotes = [
+"相信自己，你比想像中更強大！",
+"每一天都是新的開始，放下過去，擁抱現在。",
+"你的價值不需要由他人來定義。",
+"小小的進步也是進步，為自己鼓掌。"
+];
+document.getElementById('quoteDisplay').textContent =
+fallbackQuotes[Math.floor(Math.random() * fallbackQuotes.length)];
 });
 }
 
-function handleKeyboardInput(event) {
-if (event.key >= '0' && event.key <= '9') {
-appendNumber(event.key);
-} else if (event.key === '.') {
-appendNumber('.');
-} else if (event.key === '+' || event.key === '-' || event.key === '*' || event.key === '/') {
-let op = event.key;
-if (op === '*') op = '×';
-if (op === '/') op = '÷';
-chooseOperation(op);
-} else if (event.key === 'Enter' || event.key === '=') {
-compute();
-} else if (event.key === 'Escape' || event.key === 'Delete') {
-clear();
-} else if (event.key === 'Backspace') {
-deleteLast();
-}
+// 切換深色模式
+function toggleDarkMode() {
+darkMode = !darkMode;
 
-updateDisplay();
-event.preventDefault();
-}
-
-function updateDisplay() {
-currentOperandElement.innerText = currentOperand;
-
-if (operation != null) {
-previousOperandElement.innerText = `${previousOperand} ${operation}`;
+if (darkMode) {
+document.body.classList.remove('theme-light');
+document.body.classList.add('theme-dark');
 } else {
-previousOperandElement.innerText = previousOperand;
-}
+document.body.classList.remove('theme-dark');
+document.body.classList.add('theme-light');
 }
 
-// 初始化顯示
-updateDisplay();
+// 保存偏好到本地儲存
+localStorage.setItem('darkMode', darkMode);
+
+// 發送到伺服器（可選）
+fetch('/toggle_mode', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ dark_mode: darkMode })
+}).catch(error => {
+console.error('Error saving theme preference:', error);
 });
+}
 </script>
 </body>
 </html>
+'''
+
+@app.route('/')
+def index():
+"""首頁，顯示隨機語錄"""
+random_quote = random.choice(quotes)
+# 從Cookie或預設值獲取主題設定
+dark_mode = request.cookies.get('dark_mode', 'false') == 'true'
+return render_template_string(HTML_TEMPLATE, quote=random_quote, dark_mode=dark_mode)
+
+@app.route('/get_quote')
+def get_quote():
+"""獲取新的隨機語錄 (用於AJAX請求)"""
+random_quote = random.choice(quotes)
+return jsonify({'quote': random_quote})
+
+@app.route('/toggle_mode', methods=['POST'])
+def toggle_mode():
+"""切換深色/淺色模式"""
+try:
+data = request.get_json()
+if data is None:
+return jsonify({'error': 'Invalid JSON data'}), 400
+
+dark_mode = data.get('dark_mode', False)
+
+# 在實際應用中，這裡可以將用戶偏好保存到資料庫或Cookie
+response = jsonify({'dark_mode': dark_mode, 'message': 'Theme preference updated'})
+response.set_cookie('dark_mode', str(dark_mode).lower(), max_age=30*24*60*60) # 30天
+
+return response
+except Exception as e:
+return jsonify({'error': str(e)}), 500
+
+@app.route('/health')
+def health_check():
+"""健康檢查端點"""
+return jsonify({'status': 'healthy', 'quotes_count': len(quotes)})
+
+@app.errorhandler(404)
+def page_not_found(e):
+"""處理404錯誤"""
+return jsonify({'error': 'Page not found'}), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+"""處理500錯誤"""
+return jsonify({'error': 'Internal server error'}), 500
+
+if __name__ == '__main__':
+# 檢查Flask版本
+try:
+import flask
+print(f"Flask版本: {flask.__version__}")
+except ImportError:
+print("錯誤: Flask未安裝。請執行: pip install flask")
+exit(1)
+
+# 設置Flask配置
+app.config['JSON_AS_ASCII'] = False # 確保JSON正確處理中文
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+
+print("=" * 50)
+print("勵志語錄網站啟動中...")
+print(f"語錄數量: {len(quotes)} 條")
+print("訪問地址: http://localhost:5000")
+print("健康檢查: http://localhost:5000/health")
+print("=" * 50)
+
+# 啟動伺服器
+app.run(debug=True, host='0.0.0.0', port=5000)
+
