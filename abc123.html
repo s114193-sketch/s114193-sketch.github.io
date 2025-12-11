@@ -1,65 +1,103 @@
-from flask import Flask, render_template_string, request, jsonify
-import random
-import os
-
-app = Flask(__name__)
-
-# 勵志語錄資料庫
-quotes = [
-"相信自己，你比想像中更強大！",
-"每一天都是新的開始，放下過去，擁抱現在。",
-"你的價值不需要由他人來定義。",
-"小小的進步也是進步，為自己鼓掌。",
-"世界會給那些有目標和遠見的人讓路。",
-"不是看到希望才堅持，而是堅持了才看到希望。",
-"你遠比自己想像的更加勇敢和堅強。",
-"照顧好自己的心靈，和照顧身體一樣重要。"
-]
-
-# HTML模板
-HTML_TEMPLATE = '''
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>美麗心情製造機</title>
+<title>美麗心情製造機 | 每日勵志語錄</title>
+
+<!-- GitHub Pages 設定 -->
+<meta property="og:title" content="美麗心情製造機">
+<meta property="og:description" content="每天一句正能量，溫暖你的心靈">
+<meta property="og:image" content="https://img.icons8.com/color/96/000000/heart-with-arrow.png">
+<meta name="description" content="簡單、溫暖、隨時陪伴的勵志語錄網站">
+
+<!-- Tailwind CSS CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Favicon -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💫</text></svg>">
+
 <style>
+/* 自定義主題樣式 */
+:root {
+--primary-color: #4299e1;
+--primary-hover: #3182ce;
+--light-bg: #f7fafc;
+--light-text: #2d3748;
+--dark-bg: #1a202c;
+--dark-text: #e2e8f0;
+--card-bg: #ffffff;
+--dark-card-bg: #2d3748;
+}
+
 .theme-dark {
-background-color: #1a202c;
-color: #e2e8f0;
+background-color: var(--dark-bg);
+color: var(--dark-text);
 }
+
 .theme-light {
-background-color: #f7fafc;
-color: #2d3748;
+background-color: var(--light-bg);
+color: var(--light-text);
 }
+
 .btn-primary {
-background-color: #4299e1;
+background-color: var(--primary-color);
 color: white;
 padding: 12px 24px;
 border-radius: 8px;
 font-weight: bold;
 border: none;
 cursor: pointer;
-transition: background-color 0.3s;
+transition: all 0.3s ease;
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+
 .btn-primary:hover {
-background-color: #3182ce;
+background-color: var(--primary-hover);
+transform: translateY(-2px);
+box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
 }
+
+.btn-primary:active {
+transform: translateY(0);
+}
+
+.card {
+background-color: var(--card-bg);
+border-radius: 16px;
+box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+transition: all 0.3s ease;
+}
+
+.theme-dark .card {
+background-color: var(--dark-card-bg);
+box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.card:hover {
+transform: translateY(-5px);
+box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.theme-dark .card:hover {
+box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
 /* 開關樣式 */
-.switch {
+.theme-switch {
 position: relative;
 display: inline-block;
 width: 60px;
 height: 34px;
 }
-.switch input {
+
+.theme-switch input {
 opacity: 0;
 width: 0;
 height: 0;
 }
-.slider {
+
+.theme-slider {
 position: absolute;
 cursor: pointer;
 top: 0;
@@ -68,147 +106,292 @@ right: 0;
 bottom: 0;
 background-color: #ccc;
 transition: .4s;
+border-radius: 34px;
 }
-.slider:before {
+
+.theme-slider:before {
 position: absolute;
-content: "";
+content: "🌙";
+display: flex;
+align-items: center;
+justify-content: center;
 height: 26px;
 width: 26px;
 left: 4px;
 bottom: 4px;
 background-color: white;
 transition: .4s;
-}
-input:checked + .slider {
-background-color: #4299e1;
-}
-input:checked + .slider:before {
-transform: translateX(26px);
-}
-.slider.round {
-border-radius: 34px;
-}
-.slider.round:before {
 border-radius: 50%;
+font-size: 14px;
+}
+
+input:checked + .theme-slider {
+background-color: var(--primary-color);
+}
+
+input:checked + .theme-slider:before {
+transform: translateX(26px);
+content: "☀️";
+}
+
+/* 淡入動畫 */
+.fade-in {
+animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+
+/* 打字機效果 */
+.typewriter {
+overflow: hidden;
+border-right: 2px solid transparent;
+white-space: nowrap;
+animation: typing 3s steps(30, end);
+}
+
+@keyframes typing {
+from { width: 0 }
+to { width: 100% }
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+.main-quote {
+font-size: 1.25rem;
+padding: 1rem;
+}
 }
 </style>
 </head>
-<body class="theme-light min-h-screen transition-colors duration-300">
-<div class="container mx-auto px-4 py-12 max-w-3xl">
-<!-- 標題 -->
-<header class="text-center mb-12">
-<h1 class="text-4xl font-bold mb-4">美麗心情製造機</h1>
-<p class="text-xl text-gray-600 dark:text-gray-300">今天想聽什麼話呢？</p>
+<body class="theme-light min-h-screen transition-all duration-300">
+<div class="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
+<!-- 標題區 -->
+<header class="text-center mb-10 md:mb-16 fade-in">
+<h1 class="text-3xl md:text-4xl font-bold mb-4 flex items-center justify-center">
+<span class="mr-3">💖</span>美麗心情製造機<span class="ml-3">✨</span>
+</h1>
+<p class="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-2">今天想聽什麼話呢？</p>
 <p class="text-gray-500 dark:text-gray-400">輕輕一按，溫暖的話語就會出現</p>
 </header>
 
-<!-- 主要語錄區域 -->
-<main class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-12 text-center">
+<!-- 主要語錄區 -->
+<main class="card p-6 md:p-10 mb-12 md:mb-16 text-center fade-in" id="quoteCard">
 <div class="mb-8">
-<p id="quoteDisplay" class="text-2xl leading-relaxed">{{ quote }}</p>
-<p class="mt-4 text-gray-500 dark:text-gray-400">— 別不開心啦</p>
+<p id="quoteDisplay" class="main-quote text-xl md:text-2xl leading-relaxed font-medium">
+<!-- 語錄會由JavaScript動態載入 -->
+</p>
+<p class="mt-6 text-gray-500 dark:text-gray-400 italic">— 別不開心啦</p>
 </div>
 
-<button onclick="getNewQuote()" class="btn-primary text-lg">
+<div class="flex flex-col sm:flex-row gap-4 justify-center">
+<button onclick="getNewQuote()" class="btn-primary text-base md:text-lg">
 換一句話 💫
 </button>
+<button onclick="shareQuote()" class="btn-primary text-base md:text-lg" style="background-color: #48bb78;">
+分享愛 💌
+</button>
+</div>
+
+<!-- 進度指示器 -->
+<div class="mt-8">
+<div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+<div id="quoteProgress" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+</div>
+<p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+已閱讀 <span id="quoteCount">0</span> / <span id="totalQuotes">0</span> 句
+</p>
+</div>
 </main>
 
 <!-- 功能特色 -->
-<section class="mb-12">
-<h2 class="text-3xl font-bold text-center mb-8">三個小特色</h2>
-<p class="text-center text-gray-600 dark:text-gray-300 mb-8">簡單、溫暖、隨時陪伴</p>
+<section class="mb-12 md:mb-16 fade-in">
+<h2 class="text-2xl md:text-3xl font-bold text-center mb-6 md:mb-10">三個小特色</h2>
+<p class="text-center text-gray-600 dark:text-gray-300 mb-8 md:mb-12">簡單、溫暖、隨時陪伴</p>
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-<div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow text-center">
-<h3 class="text-xl font-bold mb-4">一秒就好</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+<div class="card p-5 md:p-6 text-center">
+<div class="text-3xl mb-4">⚡</div>
+<h3 class="text-xl font-bold mb-3">一秒就好</h3>
 <p class="text-gray-600 dark:text-gray-300">不用等待，點一下就能看到新的話語</p>
 </div>
-<div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow text-center">
-<h3 class="text-xl font-bold mb-4">換個心情</h3>
+<div class="card p-5 md:p-6 text-center">
+<div class="text-3xl mb-4">🎨</div>
+<h3 class="text-xl font-bold mb-3">換個心情</h3>
 <p class="text-gray-600 dark:text-gray-300">可以切換深色模式，選擇喜歡的顏色</p>
 </div>
-<div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow text-center">
-<h3 class="text-xl font-bold mb-4">隨身攜帶</h3>
+<div class="card p-5 md:p-6 text-center">
+<div class="text-3xl mb-4">📱</div>
+<h3 class="text-xl font-bold mb-3">隨身攜帶</h3>
 <p class="text-gray-600 dark:text-gray-300">手機、平板、電腦都能用</p>
 </div>
 </div>
 </section>
 
 <!-- 主題設定 -->
-<section class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
-<h2 class="text-3xl font-bold mb-6">主題設定</h2>
+<section class="card p-6 md:p-8 fade-in">
+<h2 class="text-2xl md:text-3xl font-bold mb-6">主題設定</h2>
 
-<div class="flex items-center justify-between mb-8">
-<span class="text-lg">暗色模式</span>
-<label class="switch">
-<input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()" {{ 'checked' if dark_mode else '' }}>
-<span class="slider round"></span>
+<div class="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+<div class="flex items-center">
+<span class="text-lg mr-4">🌙 暗色模式</span>
+<label class="theme-switch">
+<input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+<span class="theme-slider"></span>
 </label>
+<span class="text-lg ml-4">☀️ 亮色模式</span>
+</div>
+
+<div class="flex gap-2">
+<button onclick="setThemeColor('#4299e1')" class="w-8 h-8 rounded-full bg-blue-500 border-2 border-white dark:border-gray-800"></button>
+<button onclick="setThemeColor('#48bb78')" class="w-8 h-8 rounded-full bg-green-500 border-2 border-white dark:border-gray-800"></button>
+<button onclick="setThemeColor('#ed8936')" class="w-8 h-8 rounded-full bg-orange-500 border-2 border-white dark:border-gray-800"></button>
+<button onclick="setThemeColor('#9f7aea')" class="w-8 h-8 rounded-full bg-purple-500 border-2 border-white dark:border-gray-800"></button>
+</div>
 </div>
 
 <p class="text-gray-600 dark:text-gray-300">
 您的主題設定會自動儲存，下次訪問時會保持相同的設定。
 </p>
+
+<!-- GitHub連結 -->
+<div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+<p class="text-gray-600 dark:text-gray-400 mb-4">這個網站是開源的！</p>
+<a href="https://github.com" target="_blank" class="inline-flex items-center btn-primary" style="background-color: #24292e;">
+<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+<path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path>
+</svg>
+在GitHub上查看
+</a>
+</div>
 </section>
 
 <!-- 頁腳 -->
-<footer class="mt-12 text-center text-gray-500 dark:text-gray-400">
-<p>Designed by 美麗心情製造機</p>
+<footer class="mt-10 md:mt-16 text-center text-gray-500 dark:text-gray-400 fade-in">
+<p class="mb-2">Designed with ❤️ by 美麗心情製造機</p>
+<p class="text-sm">專為GitHub Pages設計 | 靜態網站版本</p>
 </footer>
 </div>
 
+<!-- JavaScript -->
 <script>
+// 勵志語錄資料庫
+const quotes = [
+"相信自己，你比想像中更強大！",
+"每一天都是新的開始，放下過去，擁抱現在。",
+"你的價值不需要由他人來定義。",
+"小小的進步也是進步，為自己鼓掌。",
+"世界會給那些有目標和遠見的人讓路。",
+"不是看到希望才堅持，而是堅持了才看到希望。",
+"你遠比自己想像的更加勇敢和堅強。",
+"照顧好自己的心靈，和照顧身體一樣重要。",
+"風雨過後總會有彩虹，堅持下去就會看到美好。",
+"對自己溫柔一點，你也不過是宇宙的孩子。",
+"今天的努力，是明天的實力。",
+"不要因為結束而哭泣，要為曾經發生過而微笑。",
+"有時候，最黑暗的時刻最接近光明。",
+"當你真心渴望某樣東西時，整個宇宙都會聯合起來幫助你。",
+"生命不是要超越別人，而是要超越自己。",
+"快樂不是因為擁有的多，而是因為計較的少。",
+"每一次跌倒，都是為了更堅強地站起來。",
+"你的時間有限，不要浪費時間活在別人的生活裡。",
+"與其擔心未來，不如現在好好努力。",
+"做自己，因為其他人都已經有人做了。"
+];
+
+// 已顯示的語錄索引記錄
+let shownQuotes = [];
+let currentQuoteIndex = 0;
+
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+// 初始化顯示總語錄數
+document.getElementById('totalQuotes').textContent = quotes.length;
+
 // 從本地儲存中獲取主題設定
-let darkMode = localStorage.getItem('darkMode') === 'true' || {{ 'true' if dark_mode else 'false' }};
+let darkMode = localStorage.getItem('darkMode') === 'true';
+let primaryColor = localStorage.getItem('primaryColor') || '#4299e1';
 
 // 初始化主題
-function initializeTheme() {
 if (darkMode) {
 document.body.classList.remove('theme-light');
 document.body.classList.add('theme-dark');
 document.getElementById('darkModeToggle').checked = true;
-} else {
-document.body.classList.remove('theme-dark');
-document.body.classList.add('theme-light');
-document.getElementById('darkModeToggle').checked = false;
-}
 }
 
-// 頁面載入時初始化主題
-document.addEventListener('DOMContentLoaded', initializeTheme);
+// 設置主題顏色
+setThemeColor(primaryColor, false);
+
+// 顯示第一句語錄
+getNewQuote();
+
+// 從本地儲存恢復閱讀進度
+let savedProgress = localStorage.getItem('readingProgress');
+if (savedProgress) {
+shownQuotes = JSON.parse(savedProgress);
+updateProgress();
+}
+
+// 添加動畫效果
+setTimeout(() => {
+document.getElementById('quoteCard').classList.add('fade-in');
+}, 300);
+});
 
 // 獲取新語錄
 function getNewQuote() {
-fetch('/get_quote')
-.then(response => {
-if (!response.ok) {
-throw new Error('Network response was not ok');
+let randomIndex;
+
+// 如果所有語錄都顯示過了，重置記錄
+if (shownQuotes.length >= quotes.length) {
+shownQuotes = [];
 }
-return response.json();
-})
-.then(data => {
-document.getElementById('quoteDisplay').textContent = data.quote;
-})
-.catch(error => {
-console.error('Error fetching quote:', error);
-// 如果API失敗，從本地語錄中隨機選擇一個
-const fallbackQuotes = [
-"相信自己，你比想像中更強大！",
-"每一天都是新的開始，放下過去，擁抱現在。",
-"你的價值不需要由他人來定義。",
-"小小的進步也是進步，為自己鼓掌。"
-];
-document.getElementById('quoteDisplay').textContent =
-fallbackQuotes[Math.floor(Math.random() * fallbackQuotes.length)];
-});
+
+// 隨機選擇一個未顯示過的語錄
+do {
+randomIndex = Math.floor(Math.random() * quotes.length);
+} while (shownQuotes.includes(randomIndex) && shownQuotes.length < quotes.length);
+
+// 記錄已顯示的語錄
+if (!shownQuotes.includes(randomIndex)) {
+shownQuotes.push(randomIndex);
+localStorage.setItem('readingProgress', JSON.stringify(shownQuotes));
+}
+
+// 更新當前語錄索引
+currentQuoteIndex = randomIndex;
+
+// 顯示語錄（帶淡入效果）
+const quoteDisplay = document.getElementById('quoteDisplay');
+quoteDisplay.style.opacity = '0';
+quoteDisplay.style.transform = 'translateY(10px)';
+
+setTimeout(() => {
+quoteDisplay.textContent = quotes[randomIndex];
+quoteDisplay.style.opacity = '1';
+quoteDisplay.style.transform = 'translateY(0)';
+quoteDisplay.style.transition = 'all 0.5s ease';
+
+// 更新進度條
+updateProgress();
+}, 300);
+}
+
+// 更新閱讀進度
+function updateProgress() {
+const progress = (shownQuotes.length / quotes.length) * 100;
+document.getElementById('quoteProgress').style.width = `${progress}%`;
+document.getElementById('quoteCount').textContent = shownQuotes.length;
 }
 
 // 切換深色模式
 function toggleDarkMode() {
-darkMode = !darkMode;
+const darkModeToggle = document.getElementById('darkModeToggle');
+const isDarkMode = darkModeToggle.checked;
 
-if (darkMode) {
+if (isDarkMode) {
 document.body.classList.remove('theme-light');
 document.body.classList.add('theme-dark');
 } else {
@@ -217,89 +400,97 @@ document.body.classList.add('theme-light');
 }
 
 // 保存偏好到本地儲存
-localStorage.setItem('darkMode', darkMode);
+localStorage.setItem('darkMode', isDarkMode);
+}
 
-// 發送到伺服器（可選）
-fetch('/toggle_mode', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ dark_mode: darkMode })
-}).catch(error => {
-console.error('Error saving theme preference:', error);
+// 設置主題顏色
+function setThemeColor(color, save = true) {
+// 更新CSS變數
+document.documentElement.style.setProperty('--primary-color', color);
+
+// 計算並設置懸停顏色（稍暗）
+const hoverColor = adjustColor(color, -20);
+document.documentElement.style.setProperty('--primary-hover', hoverColor);
+
+// 更新按鈕顏色
+const buttons = document.querySelectorAll('.btn-primary');
+buttons.forEach(button => {
+if (!button.style.backgroundColor || button.style.backgroundColor.includes('rgb(72, 187, 120)')) {
+button.style.backgroundColor = color;
+}
+});
+
+// 保存到本地儲存
+if (save) {
+localStorage.setItem('primaryColor', color);
+}
+}
+
+// 輔助函數：調整顏色亮度
+function adjustColor(color, amount) {
+let usePound = false;
+
+if (color[0] === "#") {
+color = color.slice(1);
+usePound = true;
+}
+
+const num = parseInt(color, 16);
+let r = (num >> 16) + amount;
+let g = ((num >> 8) & 0x00FF) + amount;
+let b = (num & 0x0000FF) + amount;
+
+r = Math.min(Math.max(0, r), 255);
+g = Math.min(Math.max(0, g), 255);
+b = Math.min(Math.max(0, b), 255);
+
+return (usePound ? "#" : "") + (b | (g << 8) | (r << 16)).toString(16).padStart(6, '0');
+}
+
+// 分享語錄
+function shareQuote() {
+const currentQuote = quotes[currentQuoteIndex];
+const shareText = `「${currentQuote}」 — 來自美麗心情製造機\n\n點擊查看更多勵志語錄：${window.location.href}`;
+
+// 檢查是否支援Web Share API
+if (navigator.share) {
+navigator.share({
+title: '美麗心情製造機 - 勵志語錄',
+text: shareText,
+url: window.location.href
+})
+.then(() => console.log('分享成功'))
+.catch(error => console.log('分享失敗:', error));
+} else {
+// 後備方案：複製到剪貼簿
+navigator.clipboard.writeText(shareText)
+.then(() => {
+alert('語錄已複製到剪貼簿！\n\n現在可以貼到社群媒體或分享給朋友了。');
+})
+.catch(err => {
+// 如果剪貼簿API失敗，顯示分享文字
+prompt('請手動複製以下文字分享：', shareText);
 });
 }
+}
+
+// 鍵盤快捷鍵支持
+document.addEventListener('keydown', function(event) {
+// 空格鍵或右箭頭：換一句話
+if (event.code === 'Space' || event.code === 'ArrowRight') {
+event.preventDefault();
+getNewQuote();
+}
+
+// D鍵：切換深色模式
+if (event.code === 'KeyD' && event.ctrlKey) {
+event.preventDefault();
+const toggle = document.getElementById('darkModeToggle');
+toggle.checked = !toggle.checked;
+toggleDarkMode();
+}
+});
 </script>
 </body>
 </html>
-'''
-
-@app.route('/')
-def index():
-"""首頁，顯示隨機語錄"""
-random_quote = random.choice(quotes)
-# 從Cookie或預設值獲取主題設定
-dark_mode = request.cookies.get('dark_mode', 'false') == 'true'
-return render_template_string(HTML_TEMPLATE, quote=random_quote, dark_mode=dark_mode)
-
-@app.route('/get_quote')
-def get_quote():
-"""獲取新的隨機語錄 (用於AJAX請求)"""
-random_quote = random.choice(quotes)
-return jsonify({'quote': random_quote})
-
-@app.route('/toggle_mode', methods=['POST'])
-def toggle_mode():
-"""切換深色/淺色模式"""
-try:
-data = request.get_json()
-if data is None:
-return jsonify({'error': 'Invalid JSON data'}), 400
-
-dark_mode = data.get('dark_mode', False)
-
-# 在實際應用中，這裡可以將用戶偏好保存到資料庫或Cookie
-response = jsonify({'dark_mode': dark_mode, 'message': 'Theme preference updated'})
-response.set_cookie('dark_mode', str(dark_mode).lower(), max_age=30*24*60*60) # 30天
-
-return response
-except Exception as e:
-return jsonify({'error': str(e)}), 500
-
-@app.route('/health')
-def health_check():
-"""健康檢查端點"""
-return jsonify({'status': 'healthy', 'quotes_count': len(quotes)})
-
-@app.errorhandler(404)
-def page_not_found(e):
-"""處理404錯誤"""
-return jsonify({'error': 'Page not found'}), 404
-
-@app.errorhandler(500)
-def internal_server_error(e):
-"""處理500錯誤"""
-return jsonify({'error': 'Internal server error'}), 500
-
-if __name__ == '__main__':
-# 檢查Flask版本
-try:
-import flask
-print(f"Flask版本: {flask.__version__}")
-except ImportError:
-print("錯誤: Flask未安裝。請執行: pip install flask")
-exit(1)
-
-# 設置Flask配置
-app.config['JSON_AS_ASCII'] = False # 確保JSON正確處理中文
-app.config['TEMPLATES_AUTO_RELOAD'] = True
-
-print("=" * 50)
-print("勵志語錄網站啟動中...")
-print(f"語錄數量: {len(quotes)} 條")
-print("訪問地址: http://localhost:5000")
-print("健康檢查: http://localhost:5000/health")
-print("=" * 50)
-
-# 啟動伺服器
-app.run(debug=True, host='0.0.0.0', port=5000)
 
